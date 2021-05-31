@@ -12,6 +12,7 @@ const typeDefs = gql`
         "A simple type for getting started!"
         hello: String
         books: [Book]
+        book(bookId: Int): Book
     }
     type Book {
         bookId: Int
@@ -32,7 +33,11 @@ const resolvers = {
   Query: {
     hello: () => 'world',
     books: () => 
-        JSON.parse(readFileSync(join(__dirname, 'books.json')).toString())
+        JSON.parse(readFileSync(join(__dirname, 'books.json')).toString()),
+        book:(parent:any, args:any, context:any, info:any) => {
+           const books = JSON.parse(readFileSync(join(__dirname, 'books.json')).toString())
+           return books.find((book:any) => book.bookId === args.bookId) 
+        } 
     
   }
 } // 스키마에 해당하는 구현체를 적음
