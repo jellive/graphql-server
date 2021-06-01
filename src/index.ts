@@ -25,6 +25,8 @@ const typeDefs = gql`
     }
     type Mutation {
         addBook(title: String, message: String, author: String, url: String): Book
+        editBook(bookId: Int, title: String, message: String, author: String, url: String): Book
+        deleteBook(bookId: Int): Book
     }
     type Book {
         bookId: Int
@@ -53,18 +55,18 @@ const resolvers = {
     
   }, 
   Mutation: {
-      /**
-       * 
-            mutation{
-            addBook(title:"t", message: "m", author: "a", url: "u") {
-                bookId
-                title
-                message
-                author
-                url
-            }
-            }
-       */
+    /**
+     * 
+        mutation{
+        addBook(title:"t", message: "m", author: "a", url: "u") {
+            bookId
+            title
+            message
+            author
+            url
+        }
+        }
+    */
     addBook: (parent: any, args: any, context: any, info: any) => {
         const books: Book[] = JSON.parse(readFileSync(join(__dirname, 'books.json')).toString())
         const maxId = Math.max(...books.map(book => book.bookId))
@@ -74,6 +76,51 @@ const resolvers = {
         }
         writeFileSync(join(__dirname, 'books.json'), JSON.stringify([...books, newBook]))
         return newBook
+    },
+    /**
+     * 
+            mutation{
+            editBook(bookId: 2, title:"t2", message: "m2", author: "a2", url: "u2"){
+                bookId
+                title
+                message
+                author
+                    url
+            }
+            }
+     */
+    editBook: (parent: any, args: any, context: any, info: any) => {
+        const books: Book[] = JSON.parse(readFileSync(join(__dirname, 'books.json')).toString())
+        // const book = books.find(book => book.bookId === args.bookId)
+        // if (book === undefined) 
+        //     resolvers.Mutation.addBook(parent, args, context, info)
+        // else {
+        //     books[books.indexOf(book)] = {
+        //         ...args,
+        //         bookId: book.bookId
+        //     }
+        //     writeFileSync(join(__dirname, 'books.json'), JSON.stringify([...books]))
+        //     return book
+        // }
+        const newBooks = books.map((book) => 
+            book.bookId === args.bookId ? args : book
+        )
+
+        writeFileSync(join(__dirname, 'books.json'), JSON.stringify([...newBooks]))
+        return args
+    },
+    deleteBook: (parent: any, args: any, context: any, info: any) => {
+        const books: Book[] = JSON.parse(readFileSync(join(__dirname, 'books.json')).toString())
+       
+        const deleted = books.find((book) => 
+            book.bookId === args.bookId
+        )
+        const newBooks = books.filter((book) => 
+            book.bookId !== args.bookId
+        )
+
+        writeFileSync(join(__dirname, 'books.json'), JSON.stringify([...newBooks]))
+        return deleted
     }
   }
 } // 스키마에 해당하는 구현체를 적음
