@@ -1,6 +1,15 @@
 import { ApolloServer, gql } from 'apollo-server'
-import {readFileSync} from 'fs'
+import {readFileSync, writeFileSync} from 'fs'
 import {join} from 'path'
+
+interface Book {
+    bookId: number
+    title: string
+    message: string
+    author: string
+    url: string
+}
+
 /**
  * typeDef(s)
  * - GraphQL Schema를 정의하는 곳
@@ -13,6 +22,9 @@ const typeDefs = gql`
         hello: String
         books: [Book]
         book(bookId: Int): Book
+    }
+    type Mutation {
+        addBook(title: String, message: String, author: String, url: String): Book
     }
     type Book {
         bookId: Int
@@ -39,6 +51,30 @@ const resolvers = {
            return books.find((book:any) => book.bookId === args.bookId) 
         } 
     
+  }, 
+  Mutation: {
+      /**
+       * 
+            mutation{
+            addBook(title:"t", message: "m", author: "a", url: "u") {
+                bookId
+                title
+                message
+                author
+                url
+            }
+            }
+       */
+    addBook: (parent: any, args: any, context: any, info: any) => {
+        const books: Book[] = JSON.parse(readFileSync(join(__dirname, 'books.json')).toString())
+        const maxId = Math.max(...books.map(book => book.bookId))
+        const newBook = {
+            ...args,
+            bookId: maxId + 1, 
+        }
+        writeFileSync(join(__dirname, 'books.json'), JSON.stringify([...books, newBook]))
+        return newBook
+    }
   }
 } // 스키마에 해당하는 구현체를 적음
 
